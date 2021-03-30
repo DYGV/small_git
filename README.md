@@ -1,2 +1,15 @@
 # Write-Yourself-a-Gitを参考にGitの実装 
-
+- [x] init
+- [ ] add
+- [ ] cat-file
+- [ ] checkout
+- [ ] commit
+- [ ] hash-object
+- [ ] log
+- [ ] ls-tree
+- [ ] merge
+- [ ] rebase
+- [ ] rev-parse
+- [ ] rm
+- [ ] show-ref
+- [ ] tag
