@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/small_git
+small_git.so
+small_git.dylib
+small_git.dll
+small_git.a
+small_git.lib
+small_git-test-*
+*.exe
+*.o
+*.obj
+*.lst
