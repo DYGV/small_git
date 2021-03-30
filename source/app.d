@@ -17,7 +17,7 @@ int main(string[] args)
         case "hash-object": cmd_hash_object(arg); break;
         case "init": cmd_init(arg); break;
         case "log": cmd_log(arg); break;
-        case "is-tree": cmd_is_tree(arg); break;
+        case "ls-tree": cmd_is_tree(arg); break;
         case "merge": cmd_merge(arg); break;
         case "rebase": cmd_rebase(arg); break;
         case "rev-parse": cmd_rev_parse(arg); break;
