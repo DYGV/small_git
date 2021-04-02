@@ -1,4 +1,5 @@
 import std.stdio: File, writeln;
+import std.array: split, join;
 import std.conv: to;
 import std.path: chainPath,absolutePath;
 import std.file: exists, 
@@ -44,8 +45,9 @@ string repo_path(GitRepository repo, string path){
 }
 
 string repo_file(GitRepository repo, string path, bool mkdir=false){
-    if(repo_dir(repo, path, mkdir))
+    if(repo_dir(repo, path.split("/")[0..$-1].join("/"), mkdir)){
         return repo_path(repo, path);
+    }
     return path;
 }
 
@@ -95,7 +97,7 @@ core repo_default_config(){
 }
 
 /// 再帰的に.gitがある場所まで遡る
-auto repo_find(string path=".", bool required=true){
+auto repo_find(string path="", bool required=true){
     GitRepository repo;
     path = absolutePath(path);
     string gitdir = chainPath(path, ".git").to!string;
