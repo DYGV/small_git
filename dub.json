@@ -3,6 +3,7 @@
 		"eisuke"
 	],
 	"dependencies": {
+		"commandr": "~>0.2.0",
 		"inifiled": "~>1.3.3"
 	},
 	"description": "A minimal D application.",

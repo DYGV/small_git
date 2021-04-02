@@ -1,32 +1,37 @@
 import std.stdio: writeln;
 import std.range: empty;
+import commandr;
 import repo;
 
-int main(string[] args)
+void main(string[] args)
 {
-    if(args.length < 2){
-        return -1;}
-    string arg = "";
-    if(args.length > 2)
-        arg = args[2];
-    switch(args[1]){
-        case "add": cmd_add(arg); break;
-        case "cat-file": cmd_cat_file(arg); break;
-        case "checkout": cmd_checkout(arg); break;
-        case "commit": cmd_commit(arg); break;
-        case "hash-object": cmd_hash_object(arg); break;
-        case "init": cmd_init(arg); break;
-        case "log": cmd_log(arg); break;
-        case "ls-tree": cmd_is_tree(arg); break;
-        case "merge": cmd_merge(arg); break;
-        case "rebase": cmd_rebase(arg); break;
-        case "rev-parse": cmd_rev_parse(arg); break;
-        case "rm": cmd_rm(arg); break;
-        case "show-ref": cmd_show_ref(arg); break;
-        case "tag": cmd_tag(arg); break;
-        default: args[1].writeln(" is not found"); break;
-  } 
-    return 1;
+    auto a = new Program("small-git", "1.0")
+          .summary("Write-Yourself-a-git implemented in D")
+          .author("DYGV")
+          .add(new Command("init")
+              .add(new Argument("dir", "directory").defaultValue("./")))
+          .add(new Command("cat-file")
+              .add(new Flag("t", null, "show object type")
+                .name("type"))
+              .add(new Flag("s", null, "show object type")
+                .name("size"))
+              .add(new Flag("p", null, "pretty-print object's content")
+                .name("pprint"))
+            .add(new Argument("object", "object id"))
+          )
+          .parse(args);
+
+  a.on("init", (args) {
+      writeln("arg: ", args.arg("dir"));
+      cmd_init(args.arg("dir"));
+  });
+
+  a.on("cat-file", (args) {
+      writeln("t: ", args.flag("type"));
+      writeln("s: ", args.flag("size"));
+      writeln("p: ", args.flag("pprint"));
+      writeln("object: ", args.arg("object"));
+  });
 }
 
 void cmd_add(string args){
@@ -50,9 +55,6 @@ void cmd_hash_object(string args){
 }
 
 void cmd_init(string arg){
-    if(arg.empty){
-        arg = "./";
-    }
     repo_create(arg);
 }
 
