@@ -1,0 +1,162 @@
+module objects;
+
+import std.format : format;
+import std.range : empty;
+import std.array : replace;
+import std.format : format;
+import std.file : read;
+import std.zlib : compress, uncompress;
+import std.uni : toLower;
+import std.stdio : File;
+import std.conv : to, parse;
+import std.algorithm.searching : countUntil;
+import std.digest.sha : SHA1Digest, toHexString;
+import repo;
+
+class GitObject {
+    GitRepository repo;
+    string fmt, size;
+    this(GitRepository repo, string size, string data = "") {
+        this.repo = repo;
+        this.size = size;
+        if (!data.empty) {
+            this.deserialize(data);
+        }
+    }
+
+    abstract string serialize();
+    abstract void deserialize(string data);
+}
+
+class GitBlob : GitObject {
+    string blobdata;
+
+    this(GitRepository repo, string size, string data = "") {
+        super(repo, size, data);
+        fmt = "blob";
+    }
+
+    override string serialize() {
+        return blobdata;
+    }
+
+    override void deserialize(string data) {
+        this.blobdata = data;
+    }
+}
+
+class GitCommit : GitObject {
+    KVLM_TBL[] commit_data;
+
+    this(GitRepository repo, string size, string data = "") {
+        super(repo, size, data);
+        fmt = "commit";
+    }
+
+    override string serialize() {
+        return kvlm_serialize(this.commit_data);
+    }
+
+    override void deserialize(string data) {
+        this.commit_data = kvlm_parse(data);
+    }
+}
+
+KVLM_TBL[] kvlm_parse(string raw, KVLM_TBL[] dct = null) {
+    long spc = raw.countUntil(' ');
+    long nl = raw.countUntil('\n');
+    if (spc < 0 || nl < spc) {
+        dct ~= KVLM_TBL("", raw[1 .. $]);
+        return dct;
+    }
+    string key = raw[0 .. spc];
+    string value = raw[spc + 1 .. nl];
+    dct ~= KVLM_TBL(key, value);
+    raw = raw[nl + 1 .. $];
+    return kvlm_parse(raw, dct);
+}
+
+struct KVLM_TBL {
+    string key, value;
+    this(string key, string value) {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+string kvlm_serialize(KVLM_TBL[] kvlm) {
+    string ret = "";
+    foreach (kvlm_tbl; kvlm) {
+        string value = kvlm_tbl.value;
+        ret ~= kvlm_tbl.key ~ ' ' ~ value.replace('\n', "\n ") ~ '\n';
+    }
+    return ret;
+}
+
+string log(GitRepository repo, string sha, string commits = "") {
+    if (!sha) {
+        return commits;
+    }
+    string parent;
+    foreach (c; (cast(GitCommit)object_read(repo, sha, true)).commit_data) {
+        parent = c.key == "parent" ? c.value : parent;
+        commits ~= c.key.empty ? "" : format!"%s: "(c.key);
+        commits ~= c.value ~ "\n";
+    }
+    return log(repo, parent, commits);
+}
+
+GitObject object_read(GitRepository repo, string sha, bool head = false) {
+    string path = repo_file(repo, "objects/" ~ sha[0 .. 2] ~ "/" ~ sha[2 .. $]);
+    string raw = cast(string)uncompress(path.read);
+    long x = countUntil(raw, ' ');
+    string fmt = raw[0 .. x];
+    long y = countUntil(raw, '\0');
+    string size = raw[x + 1 .. y];
+    GitObject obj;
+    switch (fmt) {
+    case "commit":
+        obj = new GitCommit(repo, size, raw[y .. $]);
+        break;
+    case "blob":
+        obj = new GitBlob(repo, size, raw[y .. $]);
+        break;
+    default:
+        break;
+    }
+    return obj;
+}
+
+string object_write(GitObject obj, bool actually_write = true) {
+    ubyte[] result = cast(ubyte[])(
+            obj.fmt ~ " " ~ obj.serialize.length.to!string ~ "\0" ~ obj.serialize);
+    SHA1Digest sha_d = new SHA1Digest();
+    string sha = toHexString(sha_d.digest(result)).toLower;
+    if (actually_write) {
+        string path = repo_file(obj.repo, "objects/" ~ sha[0 .. 2] ~ "/"
+                ~ sha[2 .. $], actually_write);
+        File file = File(path, "wb");
+        file.write(cast(string)compress(result));
+    }
+    return sha;
+}
+
+string object_hash(string fd, string fmt, GitRepository repo) {
+    string data = cast(string)fd.read();
+    GitObject obj;
+    switch (fmt) {
+    case "blob":
+        obj = new GitBlob(repo, data.length.to!string, data);
+        break;
+    case "commit":
+        obj = new GitCommit(repo, data.length.to!string, data);
+        break;
+    default:
+        break;
+    }
+    return repo is null ? object_write(obj, false) : object_write(obj);
+}
+
+string object_find(GitRepository repo, string name, ubyte[] fmt = [], bool follow = true) {
+    return name;
+}
