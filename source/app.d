@@ -1,4 +1,6 @@
-import std.stdio : write, writeln;
+import std.stdio : write, writeln, writefln;
+import std.range : front;
+import std.format : format;
 import commandr : Argument, Flag, Program, Command, printHelp, parse;
 import repo;
 import objects;
@@ -8,8 +10,8 @@ void main(string[] args) {
             "Write-Yourself-a-git implemented in D").author("DYGV");
 
     // add "init" command
-    program.add(new Command("init").add(new Argument("dir", "directory")
-            .defaultValue("./")));
+    program.add(new Command("init").add(new Argument("dir",
+            "directory").defaultValue("./")));
 
     // add "cat-file"
     program.add(new Command("cat-file").add(new Flag("t", null,
@@ -25,6 +27,9 @@ void main(string[] args) {
     // add "log"
     program.add(new Command("log").add(new Argument("commit", "commit object id")));
 
+    // add "ls-tree"
+    program.add(new Command("ls-tree").add(new Argument("object", "The object to show")));
+
     auto a = program.parse(args);
 
     a.on("init", (args) { cmd_init(args.arg("dir")); });
@@ -33,10 +38,6 @@ void main(string[] args) {
         bool type = args.flag("type");
         bool size = args.flag("size");
         bool pprint = args.flag("pprint");
-        if (!(type | size | pprint)) {
-            program.commands["cat-file"].printHelp();
-            return;
-        }
         string object = args.arg("object");
         cmd_cat_file(object, type, size, pprint).write;
     });
@@ -48,6 +49,8 @@ void main(string[] args) {
     });
 
     a.on("log", (args) { cmd_log(args.arg("commit")).writeln; });
+
+    a.on("ls-tree", (args) { cmd_ls_tree(args.arg("object")).writeln; });
 }
 
 void cmd_add(string args) {
@@ -88,11 +91,21 @@ void cmd_init(string arg) {
 string cmd_log(string args) {
     GitRepository repo = repo_find();
     return log(repo, args);
-
 }
 
-void cmd_is_tree(string args) {
+string cmd_ls_tree(string args) {
+    GitRepository repo = repo_find();
+    GitTree object = cast(GitTree)object_read(repo, args);
+    if (object.fmt != "tree") {
+        (cast(GitCommit)object).commit_data.front.writeln;
+    }
+    string ls_tree = "";
+    foreach (obj; (cast(GitTree)object).leaf) {
+        string fmt = object_read(repo, obj.sha).fmt;
 
+        ls_tree = format!"%s\t%s\t%s\t%s"(obj.mode, fmt, obj.sha, obj.path);
+    }
+    return ls_tree;
 }
 
 void cmd_merge(string args) {

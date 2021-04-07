@@ -1,11 +1,12 @@
 # Write-Yourself-a-Gitを参考にGitの実装 
+## Gitコマンドの対応状況
 - [x] init
 - [ ] add
-- [ ] cat-file
+- [x] cat-file
 - [ ] checkout
 - [ ] commit
-- [ ] hash-object
-- [ ] log
+- [x] hash-object
+- [x] log
 - [ ] ls-tree
 - [ ] merge
 - [ ] rebase
@@ -13,3 +14,12 @@
 - [ ] rm
 - [ ] show-ref
 - [ ] tag
+
+## Gitオブジェクトの対応状況
+|  | serialize | deserialize |
+|:----:|:----:|:----:|
+| Blob | ○ | ○ |
+| Commit | ○  | ○ |
+| Tree | × |○|
+| Tag | × | × |
+

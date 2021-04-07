@@ -1,3 +1,5 @@
+module repo;
+
 import std.stdio : File, writeln;
 import std.array : split, join;
 import std.conv : to;

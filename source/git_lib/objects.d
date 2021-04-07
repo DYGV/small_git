@@ -8,9 +8,10 @@ import std.file : read;
 import std.zlib : compress, uncompress;
 import std.uni : toLower;
 import std.stdio : File;
-import std.conv : to, parse;
+import std.conv : to;
 import std.algorithm.searching : countUntil;
 import std.digest.sha : SHA1Digest, toHexString;
+import std.typecons;
 import repo;
 
 class GitObject {
@@ -62,6 +63,66 @@ class GitCommit : GitObject {
     }
 }
 
+class GitTreeLeaf {
+    string mode, path, sha;
+    this(string mode, string path, string sha) {
+        this.mode = mode;
+        this.path = path;
+        this.sha = sha;
+    }
+}
+
+alias Leaf = Tuple!(long, GitTreeLeaf);
+Leaf tree_parse_one(string raw, long start = 0) {
+    long x = raw[start .. $].countUntil(' ') + start;
+    string mode = raw[start .. x];
+    long y = raw[x .. $].countUntil('\0') + x;
+    string path = raw[x + 1 .. y];
+    ubyte[] sha_byte = cast(ubyte[])raw[y + 1 .. y + 21];
+    string sha = sha_byte.toHexString.toLower;
+    GitTreeLeaf tree_leaf = new GitTreeLeaf(mode, path, sha);
+    Leaf leaf;
+    leaf[0] = y + 21;
+    leaf[1] = tree_leaf;
+    return leaf;
+}
+
+string tree_serialize(GitTree object) {
+    string ret = "";
+    foreach (obj; object.leaf) {
+    }
+    return ret;
+}
+
+auto tree_parse(string raw) {
+    long pos = 0;
+    long max = raw.length;
+    GitTreeLeaf[] ret = [];
+    while (pos < max) {
+        Leaf leaf = tree_parse_one(raw, pos);
+        pos = leaf[0];
+        ret ~= leaf[1];
+    }
+    return ret;
+}
+
+class GitTree : GitObject {
+    string tree_data;
+    GitTreeLeaf[] leaf;
+    this(GitRepository repo, string size, string data = "") {
+        super(repo, size, data);
+        fmt = "tree";
+    }
+
+    override string serialize() {
+        return ""; // tree_parse(this.tree_data);
+    }
+
+    override void deserialize(string data) {
+        this.leaf = tree_parse(data);
+    }
+}
+
 KVLM_TBL[] kvlm_parse(string raw, KVLM_TBL[] dct = null) {
     long spc = raw.countUntil(' ');
     long nl = raw.countUntil('\n');
@@ -98,7 +159,11 @@ string log(GitRepository repo, string sha, string commits = "") {
         return commits;
     }
     string parent;
-    foreach (c; (cast(GitCommit)object_read(repo, sha, true)).commit_data) {
+    GitObject obj = object_read(repo, sha, true);
+    if(obj.fmt != "commit"){
+        return "";
+    }
+    foreach (c; (cast(GitCommit)obj).commit_data) {
         parent = c.key == "parent" ? c.value : parent;
         commits ~= c.key.empty ? "" : format!"%s: "(c.key);
         commits ~= c.value ~ "\n";
@@ -116,10 +181,13 @@ GitObject object_read(GitRepository repo, string sha, bool head = false) {
     GitObject obj;
     switch (fmt) {
     case "commit":
-        obj = new GitCommit(repo, size, raw[y .. $]);
+        obj = new GitCommit(repo, size, raw[y + 1 .. $]);
         break;
     case "blob":
-        obj = new GitBlob(repo, size, raw[y .. $]);
+        obj = new GitBlob(repo, size, raw[y + 1 .. $]);
+        break;
+    case "tree":
+        obj = new GitTree(repo, size, raw[y + 1 .. $]);
         break;
     default:
         break;
@@ -133,8 +201,8 @@ string object_write(GitObject obj, bool actually_write = true) {
     SHA1Digest sha_d = new SHA1Digest();
     string sha = toHexString(sha_d.digest(result)).toLower;
     if (actually_write) {
-        string path = repo_file(obj.repo, "objects/" ~ sha[0 .. 2] ~ "/"
-                ~ sha[2 .. $], actually_write);
+        string path = repo_file(obj.repo,
+                "objects/" ~ sha[0 .. 2] ~ "/" ~ sha[2 .. $], actually_write);
         File file = File(path, "wb");
         file.write(cast(string)compress(result));
     }
@@ -150,6 +218,9 @@ string object_hash(string fd, string fmt, GitRepository repo) {
         break;
     case "commit":
         obj = new GitCommit(repo, data.length.to!string, data);
+        break;
+    case "tree":
+        obj = new GitTree(repo, data.length.to!string, data);
         break;
     default:
         break;
