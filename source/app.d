@@ -50,7 +50,7 @@ void main(string[] args) {
 
     a.on("log", (args) { cmd_log(args.arg("commit")).writeln; });
 
-    a.on("ls-tree", (args) { cmd_ls_tree(args.arg("object")).writeln; });
+    a.on("ls-tree", (args) { cmd_ls_tree(args.arg("object")).write; });
 }
 
 void cmd_add(string args) {
@@ -95,15 +95,18 @@ string cmd_log(string args) {
 
 string cmd_ls_tree(string args) {
     GitRepository repo = repo_find();
-    GitTree object = cast(GitTree)object_read(repo, args);
-    if (object.fmt != "tree") {
-        (cast(GitCommit)object).commit_data.front.writeln;
+    GitObject object;
+    object = object_read(repo, args);
+    if (object.fmt == "commit") {
+        string tree = (cast(GitCommit)object).commit_data.front.value;
+        object = object_read(repo, tree);
+    } else if (object.fmt != "tree") {
+        return format!"not a tree object\n";
     }
     string ls_tree = "";
     foreach (obj; (cast(GitTree)object).leaf) {
         string fmt = object_read(repo, obj.sha).fmt;
-
-        ls_tree = format!"%s\t%s\t%s\t%s"(obj.mode, fmt, obj.sha, obj.path);
+        ls_tree ~= format!"%s\t%s\t%s\t%s\n"(obj.mode, fmt, obj.sha, obj.path);
     }
     return ls_tree;
 }
