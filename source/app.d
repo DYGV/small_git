@@ -97,6 +97,7 @@ string cmd_ls_tree(string args) {
     GitRepository repo = repo_find();
     GitObject object;
     object = object_read(repo, args);
+    // argsがコミットハッシュだったらその中からツリーハッシュを取ってくる
     if (object.fmt == "commit") {
         string tree = (cast(GitCommit)object).commit_data.front.value;
         object = object_read(repo, tree);

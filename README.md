@@ -7,7 +7,7 @@
 - [ ] commit
 - [x] hash-object
 - [x] log
-- [ ] ls-tree
+- [x] ls-tree
 - [ ] merge
 - [ ] rebase
 - [ ] rev-parse
