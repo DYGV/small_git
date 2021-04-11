@@ -48,7 +48,7 @@ void main(string[] args) {
         bool size = args.flag("size");
         bool pprint = args.flag("pprint");
         string object = args.arg("object");
-        cmd_cat_file(object, type, size, pprint).write;
+        cmd_cat_file(object, type, size, pprint).writeln;
     });
 
     a.on("hash-object", (args) {
