@@ -12,7 +12,7 @@
 - [ ] rebase
 - [ ] rev-parse
 - [ ] rm
-- [ ] show-ref
+- [x] show-ref
 - [ ] tag
 
 ## Gitオブジェクトの対応状況
