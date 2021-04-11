@@ -8,7 +8,7 @@ import std.file : read;
 import std.zlib : compress, uncompress;
 import std.uni : toLower;
 import std.stdio : File;
-import std.conv : to;
+import std.conv : to, parse;
 import std.algorithm.searching : countUntil;
 import std.digest.sha : SHA1Digest, toHexString;
 import std.typecons;
@@ -90,6 +90,16 @@ Leaf tree_parse_one(string raw, long start = 0) {
 string tree_serialize(GitTree object) {
     string ret = "";
     foreach (obj; object.leaf) {
+        ubyte[] buffer;
+        ret ~= obj.mode;
+        ret ~= ' ';
+        ret ~= obj.path;
+        ret ~= '\0';
+        for (int i = 0; i < 20; i++) {
+            string b = obj.sha[i * 2 .. i * 2 + 2];
+            buffer ~= parse!ubyte(b, 16);
+        }
+        ret ~= (cast(string)buffer);
     }
     return ret;
 }
@@ -115,7 +125,7 @@ class GitTree : GitObject {
     }
 
     override string serialize() {
-        return ""; // tree_parse(this.tree_data);
+        return tree_serialize(this);
     }
 
     override void deserialize(string data) {
@@ -160,7 +170,7 @@ string log(GitRepository repo, string sha, string commits = "") {
     }
     string parent;
     GitObject obj = object_read(repo, sha, true);
-    if(obj.fmt != "commit"){
+    if (obj.fmt != "commit") {
         return "";
     }
     foreach (c; (cast(GitCommit)obj).commit_data) {
