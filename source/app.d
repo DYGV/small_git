@@ -1,5 +1,7 @@
 import std.stdio : write, writeln, writefln;
-import std.range : front;
+import std.range : front, back;
+import std.file : exists, mkdirRecurse;
+import std.path : absolutePath;
 import std.format : format;
 import commandr : Argument, Flag, Program, Command, printHelp, parse;
 import repo;
@@ -30,6 +32,10 @@ void main(string[] args) {
     // add "ls-tree"
     program.add(new Command("ls-tree").add(new Argument("object", "The object to show")));
 
+    // add "checkout"
+    program.add(new Command("checkout").add(new Argument("commit",
+            "commit object id")).add(new Argument("path", "destination path")));
+
     auto a = program.parse(args);
 
     a.on("init", (args) { cmd_init(args.arg("dir")); });
@@ -51,6 +57,10 @@ void main(string[] args) {
     a.on("log", (args) { cmd_log(args.arg("commit")).writeln; });
 
     a.on("ls-tree", (args) { cmd_ls_tree(args.arg("object")).write; });
+
+    a.on("checkout", (args) {
+        cmd_checkout(args.arg("commit"), args.arg("path"));
+    });
 }
 
 void cmd_add(string args) {
@@ -68,8 +78,20 @@ string cmd_cat_file(string args, bool t, bool s, bool p) {
     return object.serialize;
 }
 
-void cmd_checkout(string args) {
-
+void cmd_checkout(string commit, string path) {
+    GitRepository repo = repo_find();
+    GitObject obj = object_read(repo, object_find(repo, commit));
+    path ~= path.back == '/' ? "" : "/";
+    if (obj.fmt == "commit") {
+        string tree = (cast(GitCommit)obj).commit_data.front.value;
+        obj = object_read(repo, tree);
+    }
+    if (path.exists) {
+        throw new Exception("Not empty");
+    } else {
+        path.mkdirRecurse;
+    }
+    tree_checkout(repo, cast(GitTree)obj, absolutePath(path));
 }
 
 void cmd_commit(string args) {

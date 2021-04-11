@@ -4,7 +4,7 @@ import std.format : format;
 import std.range : empty;
 import std.array : replace;
 import std.format : format;
-import std.file : read;
+import std.file : read, mkdir;
 import std.zlib : compress, uncompress;
 import std.uni : toLower;
 import std.stdio : File;
@@ -130,6 +130,20 @@ class GitTree : GitObject {
 
     override void deserialize(string data) {
         this.leaf = tree_parse(data);
+    }
+}
+
+void tree_checkout(GitRepository repo, GitTree tree, string path) {
+    foreach (item; tree.leaf) {
+        GitObject obj = object_read(repo, item.sha);
+        string dest = path ~ item.path;
+        if (obj.fmt == "tree") {
+            dest.mkdir;
+            tree_checkout(repo, cast(GitTree)obj, dest ~ "/");
+        } else if (obj.fmt == "blob") {
+            auto f = File(dest, "wb");
+            f.write((cast(GitBlob)obj).blobdata);
+        }
     }
 }
 

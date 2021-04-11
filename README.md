@@ -3,7 +3,7 @@
 - [x] init
 - [ ] add
 - [x] cat-file
-- [ ] checkout
+- [x] checkout
 - [ ] commit
 - [x] hash-object
 - [x] log
