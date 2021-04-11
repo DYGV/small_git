@@ -4,12 +4,12 @@ import std.format : format;
 import std.range : empty;
 import std.array : replace;
 import std.format : format;
-import std.file : read, mkdir;
+import std.file : read, mkdir, dirEntries, SpanMode, exists;
 import std.zlib : compress, uncompress;
 import std.uni : toLower;
 import std.stdio : File;
 import std.conv : to, parse;
-import std.algorithm.searching : countUntil;
+import std.algorithm.searching : countUntil, startsWith;
 import std.digest.sha : SHA1Digest, toHexString;
 import std.typecons;
 import repo;
@@ -133,6 +133,39 @@ class GitTree : GitObject {
     }
 }
 
+string ref_resolve(GitRepository repo, string refer) {
+    if (!refer.exists) {
+        refer = repo_file(repo, refer);
+    }
+    string data = cast(string)refer.read[0 .. $ - 1];
+    if (data.startsWith("ref: ")) {
+        return ref_resolve(repo, data[5 .. $]);
+    } else {
+        return data;
+    }
+}
+
+TBL[] ref_list(GitRepository repo, string path = "") {
+    if (path.empty) {
+        path = repo_dir(repo, "refs");
+    }
+    TBL[] ret;
+    foreach (f; dirEntries(path, SpanMode.depth)) {
+        if (!f.isDir) {
+            ret ~= KVLM_TBL(f, ref_resolve(repo, f));
+        }
+    }
+    return ret;
+}
+
+string show_ref(GitRepository repo, TBL[] refs) {
+    string ret = "";
+    foreach (i; refs) {
+        ret ~= format!"%s\t%s\n"(i.value, i.key);
+    }
+    return ret;
+}
+
 void tree_checkout(GitRepository repo, GitTree tree, string path) {
     foreach (item; tree.leaf) {
         GitObject obj = object_read(repo, item.sha);
@@ -161,6 +194,7 @@ KVLM_TBL[] kvlm_parse(string raw, KVLM_TBL[] dct = null) {
     return kvlm_parse(raw, dct);
 }
 
+alias TBL = KVLM_TBL;
 struct KVLM_TBL {
     string key, value;
     this(string key, string value) {

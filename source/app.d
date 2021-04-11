@@ -36,6 +36,9 @@ void main(string[] args) {
     program.add(new Command("checkout").add(new Argument("commit",
             "commit object id")).add(new Argument("path", "destination path")));
 
+    // add "show-ref"
+    program.add(new Command("show-ref"));
+
     auto a = program.parse(args);
 
     a.on("init", (args) { cmd_init(args.arg("dir")); });
@@ -61,6 +64,7 @@ void main(string[] args) {
     a.on("checkout", (args) {
         cmd_checkout(args.arg("commit"), args.arg("path"));
     });
+    a.on("show-ref", (args) { cmd_show_ref.write; });
 }
 
 void cmd_add(string args) {
@@ -150,8 +154,10 @@ void cmd_rm(string args) {
 
 }
 
-void cmd_show_ref(string args) {
-
+string cmd_show_ref() {
+    GitRepository repo = repo_find();
+    KVLM_TBL[] refs = ref_list(repo);
+    return show_ref(repo, refs);
 }
 
 void cmd_tag(string args) {
