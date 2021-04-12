@@ -80,9 +80,10 @@ $ ./small_git ls-tree 50ce9be44e9246ffa385ed53627aef70f3f998e9
 
 ```
 $ ./small_git show-ref
-b902e8050973e1cef5e2c9f4110f90bb3be4de67        .git/refs/remotes/origin/HEAD
-b902e8050973e1cef5e2c9f4110f90bb3be4de67        .git/refs/remotes/origin/master
-b902e8050973e1cef5e2c9f4110f90bb3be4de67        .git/refs/heads/master
+34f712265c52d6e1da611695a30c39affcea75c6        .git/refs/tags/sample_tag
+b11f7d6fff4acc4ef2cfd90fa7807411aaba95a9        .git/refs/remotes/origin/HEAD
+b11f7d6fff4acc4ef2cfd90fa7807411aaba95a9        .git/refs/remotes/origin/master
+b11f7d6fff4acc4ef2cfd90fa7807411aaba95a9        .git/refs/heads/master
 ```
 
 ```
