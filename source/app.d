@@ -4,8 +4,8 @@ import std.file : exists, mkdirRecurse;
 import std.path : absolutePath;
 import std.format : format;
 import commandr : Argument, Flag, Program, Command, printHelp, parse;
-import repo;
-import objects;
+import small_git.repo;
+import small_git.objects;
 
 void main(string[] args) {
     Program program = new Program("small-git", "1.0").summary(

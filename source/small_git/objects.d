@@ -1,4 +1,4 @@
-module objects;
+module small_git.objects;
 
 import std.format : format;
 import std.range : empty;
@@ -12,7 +12,7 @@ import std.conv : to, parse;
 import std.algorithm.searching : countUntil, startsWith;
 import std.digest.sha : SHA1Digest, toHexString;
 import std.typecons;
-import repo;
+import small_git.repo;
 
 class GitObject {
     GitRepository repo;

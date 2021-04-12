@@ -1,4 +1,4 @@
-module repo;
+module small_git.repo;
 
 import std.stdio : File, writeln;
 import std.array : split, join;
