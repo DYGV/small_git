@@ -21,16 +21,16 @@
 | Blob | ○ | ○ |
 | Commit | ○  | ○ |
 | Tree | ○ |○|
-| Tag | × | × |
+| Tag | ○ | ○ |
 
 ## Setup
 1.  Clone this repository
     ```
-    git clone https://github.com/DYGV/small_git & cd ./small_git
+    git clone https://github.com/DYGV/small_git
     ```
 2. Build with dub command
     ```
-    dub build
+    cd ./small_git & dub build
     ```
 ## Usage Example
 ```

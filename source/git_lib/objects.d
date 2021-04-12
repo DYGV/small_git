@@ -63,6 +63,30 @@ class GitCommit : GitObject {
     }
 }
 
+class GitTree : GitObject {
+    string tree_data;
+    GitTreeLeaf[] leaf;
+    this(GitRepository repo, string size, string data = "") {
+        super(repo, size, data);
+        fmt = "tree";
+    }
+
+    override string serialize() {
+        return tree_serialize(this);
+    }
+
+    override void deserialize(string data) {
+        this.leaf = tree_parse(data);
+    }
+}
+
+class GitTag : GitCommit {
+    this(GitRepository repo, string size, string data = "") {
+        super(repo, size, data);
+        fmt = "tag";
+    }
+}
+
 class GitTreeLeaf {
     string mode, path, sha;
     this(string mode, string path, string sha) {
@@ -114,23 +138,6 @@ auto tree_parse(string raw) {
         ret ~= leaf[1];
     }
     return ret;
-}
-
-class GitTree : GitObject {
-    string tree_data;
-    GitTreeLeaf[] leaf;
-    this(GitRepository repo, string size, string data = "") {
-        super(repo, size, data);
-        fmt = "tree";
-    }
-
-    override string serialize() {
-        return tree_serialize(this);
-    }
-
-    override void deserialize(string data) {
-        this.leaf = tree_parse(data);
-    }
 }
 
 string ref_resolve(GitRepository repo, string refer) {
@@ -247,6 +254,9 @@ GitObject object_read(GitRepository repo, string sha, bool head = false) {
     case "tree":
         obj = new GitTree(repo, size, raw[y + 1 .. $]);
         break;
+    case "tag":
+        obj = new GitTag(repo, size, raw[y + 1 .. $]);
+        break;
     default:
         break;
     }
@@ -279,6 +289,9 @@ string object_hash(string fd, string fmt, GitRepository repo) {
         break;
     case "tree":
         obj = new GitTree(repo, data.length.to!string, data);
+        break;
+    case "tag":
+        obj = new GitTag(repo, data.length.to!string, data);
         break;
     default:
         break;
